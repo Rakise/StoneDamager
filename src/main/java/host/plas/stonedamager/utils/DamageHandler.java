@@ -1,19 +1,17 @@
 package host.plas.stonedamager.utils;
 
-import host.plas.bou.scheduling.TaskManager;
-import host.plas.bou.utils.ClassHelper;
-import host.plas.bou.utils.EntityUtils;
-import host.plas.stonedamager.StoneDamager;
 import host.plas.stonedamager.data.DamagableSelection;
 import host.plas.stonedamager.events.ScheduledDamageEvent;
 import lombok.Getter;
 import lombok.Setter;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 
-import java.util.Optional;
+import java.util.Collection;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 public class DamageHandler {
     @Getter @Setter
@@ -24,115 +22,78 @@ public class DamageHandler {
     }
 
     public static void unsetTickable(String identifier) {
-        tickMap.forEach((damagableSelection, aLong) -> {
-            if (damagableSelection.getIdentifier().equals(identifier)) {
-                tickMap.remove(damagableSelection);
+        tickMap.keySet().removeIf(selection -> selection.getIdentifier().equals(identifier));
+    }
+
+    public static void addAllTickables(Collection<DamagableSelection> selections) {
+        selections.forEach(DamageHandler::setTickable);
+    }
+
+    /**
+     * Helper: Find the closest player to a location to attribute the damage to.
+     */
+    private static Player getClosestPlayer(Location loc) {
+        if (loc.getWorld() == null) return null;
+        Player closest = null;
+        double closestDist = Double.MAX_VALUE;
+
+        // Scan for players within 15 blocks
+        for (Player p : loc.getWorld().getPlayers()) {
+            double dist = p.getLocation().distanceSquared(loc);
+            if (dist < 225 && dist < closestDist) { // 15^2 = 225
+                closestDist = dist;
+                closest = p;
             }
-        });
-    }
-
-    public static void addAllTickables(ConcurrentSkipListSet<DamagableSelection> tickMap) {
-        tickMap.forEach(DamageHandler::setTickable);
-    }
-
-    public static void clearTickables() {
-        tickMap.clear();
-    }
-
-    public static Optional<DamagableSelection> getTickable(String identifier) {
-        return tickMap.keySet().stream().filter(damagableSelection -> damagableSelection.getIdentifier().equals(identifier)).findFirst();
-    }
-
-    public static long getTicksLeft(String identifier) {
-        return getTickable(identifier).map(damagableSelection -> tickMap.get(damagableSelection)).orElse(1L);
-    }
-
-    public static void tickTicksLeft(String identifier) {
-        getTickable(identifier).ifPresent(damagableSelection -> {
-            long ticks = tickMap.get(damagableSelection);
-            ticks -= 1;
-            tickMap.put(damagableSelection, ticks);
-        });
-    }
-
-    public static void resetTicksLeft(String identifier) {
-        getTickable(identifier).ifPresent(damagableSelection -> {
-            tickMap.put(damagableSelection, damagableSelection.getTicksPerDamage());
-        });
-    }
-
-    public static void fire(LivingEntity entity, DamagableSelection damagableSelection, boolean isInSync) {
-        ScheduledDamageEvent event = new ScheduledDamageEvent(entity, damagableSelection).fire();
-        if (event.isCancelled()) return;
-
-        try {
-            if (isInSync) {
-                fireInSync(event);
-            } else {
-                if (ClassHelper.isFolia()) {
-                    TaskManager.getScheduler().runTask(entity, () -> {
-                        fireInSync(event);
-                    });
-                } else {
-                    TaskManager.getScheduler().runTask(() -> {
-                        fireInSync(event);
-                    });
-                }
-            }
-        } catch (Throwable e) {
-            StoneDamager.getInstance().logWarningWithInfo("Error while firing damage event.", e);
         }
-    }
-
-    public static void fireInSync(ScheduledDamageEvent event) {
-        try {
-            double damage = event.getDamagableSelection().getDamageAmount();
-
-            event.getEntity().damage(damage);
-        } catch (Throwable e) {
-            StoneDamager.getInstance().logWarningWithInfo("Error while firing damage event in sync.", e);
-        }
+        return closest;
     }
 
     public static void tick() {
-        try {
-            getTickMap().forEach((damagableSelection, ticks) -> {
-                if (! damagableSelection.isEnabled()) return;
+        if (tickMap.isEmpty()) return;
 
-                if (ticks > 0) {
-                    tickTicksLeft(damagableSelection.getIdentifier());
-                } else {
-                    EntityUtils.collectEntitiesThenDo((entity) -> {
-                        try {
-                            if (ClassHelper.isFolia()) {
-                                TaskManager.getScheduler().runTask(entity, getDamageTask(damagableSelection, entity));
-                            } else {
-                                TaskManager.getScheduler().runTask(getDamageTask(damagableSelection, entity));
-                            }
-                        } catch (Throwable e) {
-                            StoneDamager.getInstance().logWarningWithInfo("Error while ticking entities.", e);
+        tickMap.forEach((selection, ticksLeft) -> {
+            if (ticksLeft <= 0) {
+                // Reset the timer for this block
+                tickMap.put(selection, selection.getTicksPerDamage());
+
+                // Instead of guessing selection.getAffectedEntities(), we manually find them.
+                // We assume selection.getLocation() exists. 
+                Location loc = selection.getLocation();
+                
+                if (loc != null && loc.getWorld() != null) {
+                    // Look for victims within 1 block of the stone cutter
+                    Collection<Entity> nearby = loc.getWorld().getNearbyEntities(loc, 1.0, 1.0, 1.0);
+                    
+                    // Find the "owner" of this damage (closest player)
+                    Player damager = getClosestPlayer(loc);
+
+                    for (Entity entity : nearby) {
+                        if (!(entity instanceof LivingEntity)) continue;
+                        LivingEntity victim = (LivingEntity) entity;
+                        if (victim.isDead()) continue;
+
+                        double damage = selection.getDamageAmount();
+
+                        // Fire event
+                        ScheduledDamageEvent event = new ScheduledDamageEvent(victim, damage, selection);
+                        Bukkit.getPluginManager().callEvent(event);
+
+                        if (event.isCancelled()) continue;
+
+                        // Deal the damage
+                        if (damager != null) {
+                            // Attributes damage to the player (drops XP)
+                            victim.damage(event.getDamage(), damager);
+                        } else {
+                            // Fallback to generic damage
+                            victim.damage(event.getDamage());
                         }
-                    });
-
-                    resetTicksLeft(damagableSelection.getIdentifier());
+                    }
                 }
-            });
 
-        } catch (Throwable e) {
-            StoneDamager.getInstance().logWarningWithInfo("Error while ticking entities.", e);
-        }
-    }
-
-    public static Runnable getDamageTask(DamagableSelection damagableSelection, Entity entity) {
-        return () -> {
-            if (! damagableSelection.isEnabled()) return;
-
-            if (! (entity instanceof LivingEntity)) return;
-            LivingEntity livingEntity = (LivingEntity) entity;
-
-            if (damagableSelection.check(livingEntity)) {
-                fire(livingEntity, damagableSelection, true);
+            } else {
+                tickMap.put(selection, ticksLeft - 1);
             }
-        };
+        });
     }
 }
