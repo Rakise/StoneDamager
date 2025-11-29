@@ -7,8 +7,9 @@ ext {
             // Lombok is handled by the plugin, but keeping standard dependencies here if needed
             'com.github.Streamline-Essentials:BukkitOfUtils:master-SNAPSHOT',
 
-            // Added StreamlineCore BAPI as requested (using coordinates from provided snippet)
-            'com.github.streamline-essentials.StreamlineCore:StreamlineCore-BAPI:main-SNAPSHOT',
+            // StreamlineCore Dependencies (API & BAPI)
+            'com.github.Streamline-Essentials.StreamlineCore:API:master-SNAPSHOT',
+            'com.github.Streamline-Essentials.StreamlineCore:BAPI:master-SNAPSHOT',
 
             'dev.folia:folia-api:1.20.4-R0.1-SNAPSHOT',
             'net.kyori:adventure-api:4.16.0',
@@ -23,9 +24,10 @@ ext {
             // Updated BukkitOfUtils to the new Group ID matching BrewFaster
             'com.github.Streamline-Essentials:BukkitOfUtils:master-SNAPSHOT',
             
-            // Added StreamlineCore BAPI as requested (using coordinates from provided snippet)
-            // This provides the tv.quaint classes needed for the build
-            'com.github.streamline-essentials.StreamlineCore:StreamlineCore-BAPI:main-SNAPSHOT',
+            // StreamlineCore Dependencies (API & BAPI)
+            // Needed for tv.quaint classes
+            'com.github.Streamline-Essentials.StreamlineCore:API:master-SNAPSHOT',
+            'com.github.Streamline-Essentials.StreamlineCore:BAPI:master-SNAPSHOT',
             
             'dev.folia:folia-api:1.20.4-R0.1-SNAPSHOT',
             'net.kyori:adventure-api:4.16.0',
@@ -39,5 +41,6 @@ ext {
     FILES = [
     ]
     OTHER_PLUGINS = [
+            'me.clip:placeholderapi:2.11.5',
     ]
 }
