@@ -18,13 +18,25 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        cache: maven
+        # Removed 'cache: maven' to prevent crashing if pom.xml is nested
 
     - name: Build with Maven
-      run: mvn -B package --file pom.xml
+      run: |
+        # Find the pom.xml file anywhere in the repository
+        POM_PATH=$(find . -name "pom.xml" -type f | head -n 1)
+        
+        if [ -z "$POM_PATH" ]; then
+          echo "::error::Could not find pom.xml. Make sure you uploaded the source code correctly."
+          exit 1
+        fi
+        
+        echo "Found pom.xml at: $POM_PATH"
+        mvn -B package --file "$POM_PATH"
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: StoneDamager-Build
-        path: target/*.jar
+        path: |
+          **/target/*.jar
+          !**/original-*.jar
