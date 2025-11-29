@@ -16,13 +16,9 @@ ext {
             'net.kyori:ansi:1.0.3',
     ]
     COMP_ONLY = [
-            // Updated BukkitOfUtils to the new Group ID
+            // Updated BukkitOfUtils to the new Group ID matching BrewFaster
             'com.github.Streamline-Essentials:BukkitOfUtils:master-SNAPSHOT',
             
-            // New StreamlineCore Dependencies requested by Dev
-            'com.github.Streamline-Essentials.StreamlineCore:API:master-SNAPSHOT',
-            'com.github.Streamline-Essentials.StreamlineCore:BAPI:master-SNAPSHOT',
-
             'dev.folia:folia-api:1.20.4-R0.1-SNAPSHOT',
             'net.kyori:adventure-api:4.16.0',
             'net.kyori:adventure-text-serializer-gson:4.16.0',
