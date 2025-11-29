@@ -39,6 +39,5 @@ ext {
     FILES = [
     ]
     OTHER_PLUGINS = [
-            'me.clip:placeholderapi:2.11.5',
     ]
 }
