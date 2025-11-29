@@ -23,9 +23,6 @@ repositories {
     mavenLocal()
     maven {
         url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
-
-        // As of Gradle 5.1, you can limit this to only those
-        // dependencies you expect from it
         content {
             includeGroup 'org.bukkit'
             includeGroup 'org.spigotmc'
@@ -37,7 +34,17 @@ repositories {
         name = "sonatype"
         url = "https://oss.sonatype.org/content/groups/public/"
     }
-    maven { url "https://jitpack.io" }
+    
+    // Updated JitPack repo to handle Private Repositories (401 Error Fix)
+    maven { 
+        url "https://jitpack.io" 
+        credentials { 
+            // Default to empty string if authToken is not set to prevent crash on public builds
+            username = project.hasProperty('authToken') ? project.authToken : "" 
+            password = ""
+        }
+    }
+    
     maven {
         name = "placeholderapi"
         url = "https://repo.extendedclip.com/content/repositories/placeholderapi/"
