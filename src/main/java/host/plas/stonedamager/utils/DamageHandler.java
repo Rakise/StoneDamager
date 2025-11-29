@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 
 import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -40,24 +41,24 @@ public class DamageHandler {
     }
 
     public static Optional<DamagableSelection> getTickable(String identifier) {
-        return tickMap.keySet().stream().filter(damagableSelection -> damagableSelection.getIdentifier().equals(identifier)).findFirst();
+        return tickMap.keySet().stream().filter(d -> d.getIdentifier().equals(identifier)).findFirst();
     }
 
     public static long getTicksLeft(String identifier) {
-        return getTickable(identifier).map(damagableSelection -> tickMap.get(damagableSelection)).orElse(1L);
+        return getTickable(identifier).map(d -> tickMap.get(d)).orElse(1L);
     }
 
     public static void tickTicksLeft(String identifier) {
-        getTickable(identifier).ifPresent(damagableSelection -> {
-            long ticks = tickMap.get(damagableSelection);
+        getTickable(identifier).ifPresent(d -> {
+            long ticks = tickMap.get(d);
             ticks -= 1;
-            tickMap.put(damagableSelection, ticks);
+            tickMap.put(d, ticks);
         });
     }
 
     public static void resetTicksLeft(String identifier) {
-        getTickable(identifier).ifPresent(damagableSelection -> {
-            tickMap.put(damagableSelection, damagableSelection.getTicksPerDamage());
+        getTickable(identifier).ifPresent(d -> {
+            tickMap.put(d, d.getTicksPerDamage());
         });
     }
 
@@ -70,13 +71,9 @@ public class DamageHandler {
                 fireInSync(event);
             } else {
                 if (ClassHelper.isFolia()) {
-                    TaskManager.getScheduler().runTask(entity, () -> {
-                        fireInSync(event);
-                    });
+                    TaskManager.getScheduler().runTask(entity, () -> fireInSync(event));
                 } else {
-                    TaskManager.getScheduler().runTask(() -> {
-                        fireInSync(event);
-                    });
+                    TaskManager.getScheduler().runTask(() -> fireInSync(event));
                 }
             }
         } catch (Throwable e) {
@@ -84,11 +81,40 @@ public class DamageHandler {
         }
     }
 
+    // New helper: find nearest player within range
+    private static Player getNearestPlayer(LivingEntity entity, double range) {
+        Player nearest = null;
+        double nearestDist = Double.MAX_VALUE;
+
+        for (Player p : entity.getWorld().getPlayers()) {
+            if (!p.isOnline() || p.isDead()) continue;
+
+            double dist = p.getLocation().distance(entity.getLocation());
+            if (dist <= range && dist < nearestDist) {
+                nearestDist = dist;
+                nearest = p;
+            }
+        }
+
+        return nearest;
+    }
+
     public static void fireInSync(ScheduledDamageEvent event) {
         try {
+            LivingEntity target = event.getEntity();
             double damage = event.getDamagableSelection().getDamageAmount();
 
-            event.getEntity().damage(damage);
+            // Find closest player within 30 blocks
+            Player attacker = getNearestPlayer(target, 30);
+
+            if (attacker != null) {
+                // Player-based damage: XP, drops, kill credit
+                target.damage(damage, attacker);
+            } else {
+                // No player nearby: environmental damage
+                target.damage(damage);
+            }
+
         } catch (Throwable e) {
             StoneDamager.getInstance().logWarningWithInfo("Error while firing damage event in sync.", e);
         }
@@ -97,7 +123,7 @@ public class DamageHandler {
     public static void tick() {
         try {
             getTickMap().forEach((damagableSelection, ticks) -> {
-                if (! damagableSelection.isEnabled()) return;
+                if (!damagableSelection.isEnabled()) return;
 
                 if (ticks > 0) {
                     tickTicksLeft(damagableSelection.getIdentifier());
@@ -125,9 +151,9 @@ public class DamageHandler {
 
     public static Runnable getDamageTask(DamagableSelection damagableSelection, Entity entity) {
         return () -> {
-            if (! damagableSelection.isEnabled()) return;
+            if (!damagableSelection.isEnabled()) return;
 
-            if (! (entity instanceof LivingEntity)) return;
+            if (!(entity instanceof LivingEntity)) return;
             LivingEntity livingEntity = (LivingEntity) entity;
 
             if (damagableSelection.check(livingEntity)) {
