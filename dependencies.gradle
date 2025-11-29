@@ -4,11 +4,8 @@ ext {
     SHADOW = [
     ]
     ANNO = [
-            // Updated to CamelCase per JitPack requirements and added Core modules
+            // Lombok is handled by the plugin, but keeping standard dependencies here if needed
             'com.github.Streamline-Essentials:BukkitOfUtils:master-SNAPSHOT',
-            'com.github.Streamline-Essentials.StreamlineCore:API:master-SNAPSHOT',
-            'com.github.Streamline-Essentials.StreamlineCore:BAPI:master-SNAPSHOT',
-            
             'dev.folia:folia-api:1.20.4-R0.1-SNAPSHOT',
             'net.kyori:adventure-api:4.16.0',
             'net.kyori:adventure-text-serializer-gson:4.16.0',
@@ -19,11 +16,13 @@ ext {
             'net.kyori:ansi:1.0.3',
     ]
     COMP_ONLY = [
-            // Updated to CamelCase per JitPack requirements and added Core modules
+            // Updated BukkitOfUtils to the new Group ID
             'com.github.Streamline-Essentials:BukkitOfUtils:master-SNAPSHOT',
+            
+            // New StreamlineCore Dependencies requested by Dev
             'com.github.Streamline-Essentials.StreamlineCore:API:master-SNAPSHOT',
             'com.github.Streamline-Essentials.StreamlineCore:BAPI:master-SNAPSHOT',
-            
+
             'dev.folia:folia-api:1.20.4-R0.1-SNAPSHOT',
             'net.kyori:adventure-api:4.16.0',
             'net.kyori:adventure-text-serializer-gson:4.16.0',
