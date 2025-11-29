@@ -35,13 +35,14 @@ repositories {
         url = "https://oss.sonatype.org/content/groups/public/"
     }
     
-    // Updated JitPack repo to handle Private Repositories (401 Error Fix)
+    // Updated JitPack repo logic to be conditional
+    // This prevents 401 errors on public repos if the authToken is empty
     maven { 
         url "https://jitpack.io" 
-        credentials { 
-            // Default to empty string if authToken is not set to prevent crash on public builds
-            username = project.hasProperty('authToken') ? project.authToken : "" 
-            password = ""
+        if (project.hasProperty('authToken') && project.authToken.toString().trim()) {
+            credentials { 
+                username = project.authToken 
+            }
         }
     }
     
