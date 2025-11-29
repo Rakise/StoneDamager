@@ -1,33 +1,58 @@
 ext {
+    // Implementation dependencies (shaded inside your plugin)
     IMPL = [
     ]
+
+    // Dependencies to be shaded using the Shadow plugin
     SHADOW = [
     ]
+
+    // Annotation processors (compile-time only)
     ANNO = [
-            'com.github.streamline-essentials:BukkitOfUtils:master-SNAPSHOT',
-            'dev.folia:folia-api:1.20.4-R0.1-SNAPSHOT',
-            'net.kyori:adventure-api:4.16.0',
-            'net.kyori:adventure-text-serializer-gson:4.16.0',
-            'net.kyori:adventure-text-serializer-legacy:4.16.0',
-            'net.kyori:adventure-text-serializer-plain:4.16.0',
-            'net.kyori:adventure-text-minimessage:4.16.0',
-            'net.kyori:adventure-text-serializer-ansi:4.16.0',
-            'net.kyori:ansi:1.0.3',
+            // Streamline Core APIs
+            "com.github.Streamline-Essentials.StreamlineCore:API:master-SNAPSHOT",
+            "com.github.Streamline-Essentials.StreamlineCore:BAPI:master-SNAPSHOT",
+
+            // BukkitOfUtils – REQUIRED for tv.quaint.events, tv.quaint.objects, tv.quaint.storage
+            "com.github.Quaint-Studios:BukkitOfUtils:1.1.15",
+
+            // Folia & Adventure
+            "dev.folia:folia-api:1.20.4-R0.1-SNAPSHOT",
+            "net.kyori:adventure-api:4.16.0",
+            "net.kyori:adventure-text-serializer-gson:4.16.0",
+            "net.kyori:adventure-text-serializer-legacy:4.16.0",
+            "net.kyori:adventure-text-serializer-plain:4.16.0",
+            "net.kyori:adventure-text-minimessage:4.16.0",
+            "net.kyori:adventure-text-serializer-ansi:4.16.0",
+            "net.kyori:ansi:1.0.3",
     ]
+
+    // Compile-only dependencies (not included in final jar)
     COMP_ONLY = [
-            'com.github.streamline-essentials:BukkitOfUtils:master-SNAPSHOT',
-            'dev.folia:folia-api:1.20.4-R0.1-SNAPSHOT',
-            'net.kyori:adventure-api:4.16.0',
-            'net.kyori:adventure-text-serializer-gson:4.16.0',
-            'net.kyori:adventure-text-serializer-legacy:4.16.0',
-            'net.kyori:adventure-text-serializer-plain:4.16.0',
-            'net.kyori:adventure-text-minimessage:4.16.0',
-            'net.kyori:adventure-text-serializer-ansi:4.16.0',
-            'net.kyori:ansi:1.0.3',
+            // Streamline Core APIs
+            "com.github.Streamline-Essentials.StreamlineCore:API:master-SNAPSHOT",
+            "com.github.Streamline-Essentials.StreamlineCore:BAPI:master-SNAPSHOT",
+
+            // BukkitOfUtils – provides tv.quaint.* classes
+            "com.github.Quaint-Studios:BukkitOfUtils:1.1.15",
+
+            // Folia & Adventure APIs
+            "dev.folia:folia-api:1.20.4-R0.1-SNAPSHOT",
+            "net.kyori:adventure-api:4.16.0",
+            "net.kyori:adventure-text-serializer-gson:4.16.0",
+            "net.kyori:adventure-text-serializer-legacy:4.16.0",
+            "net.kyori:adventure-text-serializer-plain:4.16.0",
+            "net.kyori:adventure-text-minimessage:4.16.0",
+            "net.kyori:adventure-text-serializer-ansi:4.16.0",
+            "net.kyori:ansi:1.0.3",
     ]
+
+    // Local files (empty unless you add custom jars)
     FILES = [
     ]
+
+    // Other plugin APIs you depend on
     OTHER_PLUGINS = [
-            'me.clip:placeholderapi:2.11.5',
+            "me.clip:placeholderapi:2.11.5",
     ]
 }
