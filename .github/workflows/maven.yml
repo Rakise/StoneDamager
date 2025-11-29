@@ -1,4 +1,4 @@
-name: Java Build
+name: Java CI with Gradle
 
 on:
   push:
@@ -18,25 +18,16 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        # Removed 'cache: maven' to prevent crashing if pom.xml is nested
+        cache: gradle
 
-    - name: Build with Maven
-      run: |
-        # Find the pom.xml file anywhere in the repository
-        POM_PATH=$(find . -name "pom.xml" -type f | head -n 1)
-        
-        if [ -z "$POM_PATH" ]; then
-          echo "::error::Could not find pom.xml. Make sure you uploaded the source code correctly."
-          exit 1
-        fi
-        
-        echo "Found pom.xml at: $POM_PATH"
-        mvn -B package --file "$POM_PATH"
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Build with Gradle
+      run: ./gradlew build
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: StoneDamager-Build
-        path: |
-          **/target/*.jar
-          !**/original-*.jar
+        path: build/libs/*.jar
